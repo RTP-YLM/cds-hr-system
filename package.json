@@ -1,0 +1,21 @@
+{
+  "name": "cds-hr-system",
+  "version": "1.0.0",
+  "description": "CDS HR System - Complete HRMS with Individual Work Schedules",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "install": "cd backend && npm install",
+    "dev": "cd backend && npm run dev",
+    "build": "echo 'No build step required'"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RTP-YLM/cds-hr-system.git"
+  },
+  "author": "RTP-YLM",
+  "license": "MIT"
+}
