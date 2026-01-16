@@ -39,6 +39,7 @@ psql -U postgres -h localhost -p 5432 -d cds-hr -f database/schema.sql
 - status: สถานะ (probation, internship, part-time, permanent, resigned)
 - employment_type: ประเภทการจ้าง (daily, monthly)
 - base_salary_or_wage: เงินเดือน/ค่าแรง
+- work_start_time, work_end_time: เวลาเข้า-ออกงานมาตรฐานรายบุคคล
 
 #### 3. attendance (บันทึกเวลา)
 - id: รหัสบันทึก
@@ -49,6 +50,7 @@ psql -U postgres -h localhost -p 5432 -d cds-hr -f database/schema.sql
 - late_minutes: นาทีที่สาย
 - is_leave, leave_type: การลา
 - calculated_wage_daily: เงินที่คำนวณได้
+- **Unique Constraint**: `(employee_id, date)` เพื่อรองรับระบบ **Batch Upsert**
 
 #### 4. system_configs (ตั้งค่าระบบ)
 - key: ชื่อตัวแปร

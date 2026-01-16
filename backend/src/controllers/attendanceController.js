@@ -209,12 +209,54 @@ export const getAttendanceSummary = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc   Batch upsert attendance records
+// @route  POST /api/attendance/batch
+export const batchUpsertAttendance = asyncHandler(async (req, res) => {
+  const { date, items } = req.validatedData;
+  const results = [];
+
+  const configs = await SystemConfig.getAllAsObject();
+
+  for (const item of items) {
+    const employee = await Employee.getById(item.employee_id);
+    if (!employee) continue;
+
+    const position = await Position.getById(employee.position_id);
+
+    const attendanceData = {
+      ...item,
+      date
+    };
+
+    // คำนวณนาทีที่สาย
+    if (attendanceData.check_in_time && !attendanceData.is_leave) {
+      const workStartTime = employee.work_start_time || configs.standard_check_in_time;
+      attendanceData.late_minutes = calculateLateMinutes(attendanceData.check_in_time, workStartTime);
+    } else {
+      attendanceData.late_minutes = 0;
+    }
+
+    // คำนวณค่าแรง
+    attendanceData.calculated_wage_daily = calculateAttendanceWage(attendanceData, employee, position, configs);
+
+    const record = await Attendance.upsert(attendanceData);
+    results.push(record);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: `บันทึกข้อมูลสำเร็จ ${results.length} รายการ`,
+    data: results
+  });
+});
+
 export default {
   getAttendanceRecords,
   getAttendanceByMonth,
   getAttendance,
   createAttendance,
   updateAttendance,
+  batchUpsertAttendance,
   deleteAttendance,
   getAttendanceSummary
 };

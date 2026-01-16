@@ -43,6 +43,8 @@ CREATE TABLE hr_system.employees (
     bank_account_no VARCHAR(20),
     profile_image_url VARCHAR(255),
     contract_file_url VARCHAR(255),
+    work_start_time TIME DEFAULT '08:00:00',
+    work_end_time TIME DEFAULT '17:00:00',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

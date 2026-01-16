@@ -117,6 +117,7 @@ npm start
 - `GET /api/attendance/employee/:employee_id/:month` - ดึงข้อมูลตามพนักงานและเดือน
 - `GET /api/attendance/summary/:employee_id/:month` - สรุปการเข้างานรายเดือน
 - `POST /api/attendance` - สร้างบันทึกการเข้างาน
+- `POST /api/attendance/batch` - บันทึกการเข้างานแบบกลุ่ม (Batch Upsert - สร้างหรืออัปเดต)
 - `PATCH /api/attendance/:id` - อัพเดทการเข้างาน
 - `DELETE /api/attendance/:id` - ลบการเข้างาน
 
@@ -215,6 +216,7 @@ curl http://localhost:5000/api/config
 | `DB_PASSWORD` | Database password | postgres |
 | `DB_NAME` | Database name | cds-hr |
 | `DB_SCHEMA` | Schema name | hr_system |
+| `DATABASE_URL` | Full connection string (Cloud) | - |
 | `PORT` | Server port | 5000 |
 | `NODE_ENV` | Environment | development |
 

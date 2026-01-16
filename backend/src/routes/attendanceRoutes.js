@@ -5,6 +5,7 @@ import {
   getAttendance,
   createAttendance,
   updateAttendance,
+  batchUpsertAttendance,
   deleteAttendance,
   getAttendanceSummary
 } from '../controllers/attendanceController.js';
@@ -12,6 +13,7 @@ import { validateBody, validateQuery, validateParams } from '../utils/validators
 import {
   attendanceSchema,
   attendanceUpdateSchema,
+  batchAttendanceSchema,
   attendanceQuerySchema
 } from '../utils/validators.js';
 
@@ -26,13 +28,19 @@ router.get('/employee/:employee_id/:month',
   getAttendanceByMonth
 );
 
+// Batch route
+router.post('/batch',
+  validateBody(batchAttendanceSchema),
+  batchUpsertAttendance
+);
+
 // CRUD routes
 router.get('/', getAttendanceRecords);
-router.get('/:id', getAttendance);
 router.post('/',
   validateBody(attendanceSchema),
   createAttendance
 );
+router.get('/:id', getAttendance);
 router.patch('/:id',
   validateBody(attendanceUpdateSchema),
   updateAttendance

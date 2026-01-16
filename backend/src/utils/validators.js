@@ -35,7 +35,10 @@ export const dateSchema = z.string()
 
 // Validator สำหรับเวลา
 export const timeSchema = z.string()
-  .regex(/^\d{2}:\d{2}(:\d{2})?$/, 'รูปแบบเวลาต้องเป็น HH:MM หรือ HH:MM:SS');
+  .refine((val) => {
+    if (!val || val === '') return true;
+    return /^\d{2}:\d{2}(:\d{2})?$/.test(val);
+  }, 'รูปแบบเวลาต้องเป็น HH:MM หรือ HH:MM:SS');
 
 // Employee Schema
 export const employeeSchema = z.object({
@@ -104,6 +107,20 @@ export const attendanceUpdateSchema = z.object({
   leave_type: z.string().optional(),
   calculated_wage_daily: z.number().min(0).optional(),
   notes: z.string().optional(),
+});
+
+// Batch Attendance Schema
+export const batchAttendanceSchema = z.object({
+  date: dateSchema,
+  items: z.array(z.object({
+    employee_id: z.number().int().positive(),
+    check_in_time: timeSchema.optional(),
+    check_out_time: timeSchema.optional(),
+    ot_hours: z.number().min(0).max(24).default(0),
+    is_leave: z.boolean().default(false),
+    leave_type: z.string().optional(),
+    notes: z.string().optional(),
+  }))
 });
 
 // Position Schema
@@ -208,6 +225,7 @@ export default {
   employeeUpdateSchema,
   attendanceSchema,
   attendanceUpdateSchema,
+  batchAttendanceSchema,
   positionSchema,
   systemConfigSchema,
   attendanceQuerySchema,
