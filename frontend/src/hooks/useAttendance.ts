@@ -130,6 +130,33 @@ export const useAttendance = () => {
     }
   }
 
+  // สร้างบันทึกการเข้างานแบบกลุ่ม
+  const createBatchAttendance = async (data: { date: string; items: any[] }) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await fetch(`${API_URL}/attendance/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      const result = await response.json()
+
+      if (result.success) {
+        await fetchAttendances()
+        return result.data
+      } else {
+        setError(result.message)
+        return null
+      }
+    } catch (err: any) {
+      setError(err.message)
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return {
     attendances,
     loading,
@@ -137,6 +164,7 @@ export const useAttendance = () => {
     fetchAttendances,
     getAttendanceByMonth,
     createAttendance,
+    createBatchAttendance,
     updateAttendance,
     deleteAttendance,
   }

@@ -156,6 +156,49 @@ export class Attendance {
   }
 
   /**
+   * Upsert (Create or Update) ข้อมูลการเข้างาน
+   */
+  static async upsert(data) {
+    const sql = `
+      INSERT INTO attendance (
+        employee_id, date, check_in_time, check_out_time,
+        ot_hours, ot_amount, late_minutes, is_leave, leave_type,
+        calculated_wage_daily, notes
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      ON CONFLICT (employee_id, date) 
+      DO UPDATE SET
+        check_in_time = EXCLUDED.check_in_time,
+        check_out_time = EXCLUDED.check_out_time,
+        ot_hours = EXCLUDED.ot_hours,
+        ot_amount = EXCLUDED.ot_amount,
+        late_minutes = EXCLUDED.late_minutes,
+        is_leave = EXCLUDED.is_leave,
+        leave_type = EXCLUDED.leave_type,
+        calculated_wage_daily = EXCLUDED.calculated_wage_daily,
+        notes = EXCLUDED.notes,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *
+    `;
+
+    const params = [
+      data.employee_id,
+      data.date,
+      data.check_in_time,
+      data.check_out_time,
+      data.ot_hours || 0,
+      data.ot_amount || 0,
+      data.late_minutes || 0,
+      data.is_leave || false,
+      data.leave_type,
+      data.calculated_wage_daily || 0,
+      data.notes
+    ];
+
+    const result = await query(sql, params);
+    return result.rows[0];
+  }
+
+  /**
    * ลบบันทึกการเข้างาน
    */
   static async delete(id) {
