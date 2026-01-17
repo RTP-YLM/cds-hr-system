@@ -103,12 +103,12 @@ export const AttendancePage = () => {
       date: selectedDate,
       items: batchItems.map(item => ({
         employee_id: item.employee_id,
-        check_in_time: item.is_leave ? '' : item.check_in_time,
-        check_out_time: item.is_leave ? '' : item.check_out_time,
+        check_in_time: item.is_leave ? null : item.check_in_time,
+        check_out_time: item.is_leave ? null : item.check_out_time,
         ot_hours: item.ot_hours,
         is_leave: item.is_leave,
         leave_type: item.is_leave ? item.leave_type : null,
-        notes: item.notes
+        notes: item.notes || ''
       }))
     }
 

@@ -76,15 +76,15 @@ export const employeeUpdateSchema = employeeSchema.partial();
 export const attendanceSchema = z.object({
   employee_id: z.number().int().positive(),
   date: dateSchema,
-  check_in_time: timeSchema.optional(),
-  check_out_time: timeSchema.optional(),
+  check_in_time: timeSchema.nullable().optional(),
+  check_out_time: timeSchema.nullable().optional(),
   ot_hours: z.number().min(0).max(24).default(0),
   ot_amount: z.number().min(0).default(0),
   late_minutes: z.number().int().min(0).default(0),
   is_leave: z.boolean().default(false),
   leave_type: z.string().nullable().optional(),
   calculated_wage_daily: z.number().min(0).default(0),
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
 }).refine((data) => {
   // ถ้าลา ต้องระบุประเภทการลา
   if (data.is_leave && !data.leave_type) {
@@ -98,15 +98,15 @@ export const attendanceSchema = z.object({
 
 // Attendance Update Schema
 export const attendanceUpdateSchema = z.object({
-  check_in_time: timeSchema.optional(),
-  check_out_time: timeSchema.optional(),
+  check_in_time: timeSchema.nullable().optional(),
+  check_out_time: timeSchema.nullable().optional(),
   ot_hours: z.number().min(0).max(24).optional(),
   ot_amount: z.number().min(0).optional(),
   late_minutes: z.number().int().min(0).optional(),
   is_leave: z.boolean().optional(),
   leave_type: z.string().nullable().optional(),
   calculated_wage_daily: z.number().min(0).optional(),
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 // Batch Attendance Schema
@@ -114,12 +114,12 @@ export const batchAttendanceSchema = z.object({
   date: dateSchema,
   items: z.array(z.object({
     employee_id: z.number().int().positive(),
-    check_in_time: timeSchema.optional(),
-    check_out_time: timeSchema.optional(),
+    check_in_time: timeSchema.nullable().optional(),
+    check_out_time: timeSchema.nullable().optional(),
     ot_hours: z.number().min(0).max(24).default(0),
     is_leave: z.boolean().default(false),
     leave_type: z.string().nullable().optional(),
-    notes: z.string().optional(),
+    notes: z.string().nullable().optional(),
   }))
 });
 

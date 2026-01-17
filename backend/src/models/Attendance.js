@@ -183,8 +183,8 @@ export class Attendance {
     const params = [
       data.employee_id,
       data.date,
-      data.check_in_time,
-      data.check_out_time,
+      data.check_in_time || null,
+      data.check_out_time || null,
       data.ot_hours || 0,
       data.ot_amount || 0,
       data.late_minutes || 0,
