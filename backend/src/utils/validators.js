@@ -82,7 +82,7 @@ export const attendanceSchema = z.object({
   ot_amount: z.number().min(0).default(0),
   late_minutes: z.number().int().min(0).default(0),
   is_leave: z.boolean().default(false),
-  leave_type: z.string().optional(),
+  leave_type: z.string().nullable().optional(),
   calculated_wage_daily: z.number().min(0).default(0),
   notes: z.string().optional(),
 }).refine((data) => {
@@ -104,7 +104,7 @@ export const attendanceUpdateSchema = z.object({
   ot_amount: z.number().min(0).optional(),
   late_minutes: z.number().int().min(0).optional(),
   is_leave: z.boolean().optional(),
-  leave_type: z.string().optional(),
+  leave_type: z.string().nullable().optional(),
   calculated_wage_daily: z.number().min(0).optional(),
   notes: z.string().optional(),
 });
@@ -118,7 +118,7 @@ export const batchAttendanceSchema = z.object({
     check_out_time: timeSchema.optional(),
     ot_hours: z.number().min(0).max(24).default(0),
     is_leave: z.boolean().default(false),
-    leave_type: z.string().optional(),
+    leave_type: z.string().nullable().optional(),
     notes: z.string().optional(),
   }))
 });

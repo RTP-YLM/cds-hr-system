@@ -27,9 +27,73 @@ export const usePositions = () => {
     }
   }
 
+  const createPosition = async (data: any) => {
+    setLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/positions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      const result = await response.json()
+      if (result.success) {
+        await fetchPositions()
+        return result.data
+      }
+      return null
+    } catch (err: any) {
+      setError(err.message)
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updatePosition = async (id: number, data: any) => {
+    setLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/positions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      const result = await response.json()
+      if (result.success) {
+        await fetchPositions()
+        return result.data
+      }
+      return null
+    } catch (err: any) {
+      setError(err.message)
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const deletePosition = async (id: number) => {
+    setLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/positions/${id}`, {
+        method: 'DELETE',
+      })
+      const result = await response.json()
+      if (result.success) {
+        await fetchPositions()
+        return true
+      }
+      return false
+    } catch (err: any) {
+      setError(err.message)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchPositions()
   }, [])
 
-  return { positions, loading, error, fetchPositions }
+  return { positions, loading, error, fetchPositions, createPosition, updatePosition, deletePosition }
 }

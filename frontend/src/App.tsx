@@ -6,6 +6,7 @@ import { EmployeeFormPage } from '@/pages/EmployeeFormPage'
 import { AttendancePage } from '@/pages/AttendancePage'
 import { PayrollPage } from '@/pages/PayrollPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { PositionsPage } from '@/pages/PositionsPage'
 
 function App() {
   return (
@@ -28,6 +29,9 @@ function App() {
 
           {/* Payroll Route */}
           <Route path="/payroll" element={<PayrollPage />} />
+
+          {/* Positions Route */}
+          <Route path="/positions" element={<PositionsPage />} />
 
           {/* Settings Route */}
           <Route path="/settings" element={<SettingsPage />} />
