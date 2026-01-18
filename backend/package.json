@@ -7,9 +7,14 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "build": "echo 'No build step required'",
     "db:setup": "psql -U postgres -h localhost -p 5432 -d cds-hr -f ../database/schema.sql"
   },
-  "keywords": ["hr", "payroll", "attendance"],
+  "keywords": [
+    "hr",
+    "payroll",
+    "attendance"
+  ],
   "author": "CDS",
   "license": "MIT",
   "dependencies": {
