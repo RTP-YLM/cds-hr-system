@@ -27,4 +27,7 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    allowedHosts: ['cds-hr-frontend-production.up.railway.app']
+  }
 })
