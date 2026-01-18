@@ -15,6 +15,7 @@ import employeeRoutes from './routes/employeeRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
 import positionRoutes from './routes/positionRoutes.js';
 import configRoutes from './routes/configRoutes.js';
+import holidayRoutes from './routes/holidayRoutes.js';
 
 dotenv.config();
 
@@ -46,6 +47,7 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/positions', positionRoutes);
 app.use('/api/config', configRoutes);
+app.use('/api/holidays', holidayRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -57,7 +59,8 @@ app.get('/', (req, res) => {
       employees: '/api/employees',
       attendance: '/api/attendance',
       positions: '/api/positions',
-      config: '/api/config'
+      config: '/api/config',
+      holidays: '/api/holidays'
     }
   });
 });

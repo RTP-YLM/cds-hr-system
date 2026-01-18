@@ -105,8 +105,9 @@ INSERT INTO hr_system.system_configs (key, value, description, data_type) VALUES
 ('leave_sick_deduction', '0', 'ลาป่วยหักเงิน (%) - 0 = ไม่หัก', 'number'),
 ('leave_personal_deduction', '100', 'ลากิจหักเงิน (%) - 100 = หักเต็ม', 'number'),
 ('leave_vacation_deduction', '0', 'ลาพักร้อนหักเงิน (%) - 0 = ไม่หัก', 'number'),
-('work_days_per_month', '26', 'จำนวนวันทำงานต่อเดือน (สำหรับพนักงานรายเดือน)', 'number'),
-('daily_work_hours', '8', 'จำนวนชั่วโมงทำงานต่อวัน', 'number');
+('daily_work_hours', '8', 'จำนวนชั่วโมงทำงานต่อวัน', 'number'),
+('weekly_off_days', '[0]', 'วันหยุดประจำสัปดาห์ (0=อาทิตย์, ..., 6=เสาร์) รูปแบบ JSON array', 'json'),
+('saturday_work_mode', 'biweekly', 'โหมดการทำงานวันเสาร์ (all=ทำทุกเสาร์, none=หยุดทุกเสาร์, biweekly=เสาร์เว้นเสาร์)', 'string');
 
 -- Insert sample positions
 INSERT INTO hr_system.positions (position_name, meal_allowance_per_day, monthly_allowance) VALUES
@@ -143,6 +144,24 @@ CREATE TRIGGER update_attendance_updated_at BEFORE UPDATE ON hr_system.attendanc
     FOR EACH ROW EXECUTE FUNCTION hr_system.update_updated_at_column();
 
 CREATE TRIGGER update_system_configs_updated_at BEFORE UPDATE ON hr_system.system_configs
+    FOR EACH ROW EXECUTE FUNCTION hr_system.update_updated_at_column();
+
+-- Table: Holidays
+CREATE TABLE hr_system.holidays (
+    id SERIAL PRIMARY KEY,
+    date DATE UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    holiday_type VARCHAR(50) DEFAULT 'public', -- public, company, other
+    is_paid BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Add comment
+COMMENT ON TABLE hr_system.holidays IS 'วันหยุดนักขัตฤกษ์และวันหยุดบริษัท';
+
+-- Add trigger for updated_at
+CREATE TRIGGER update_holidays_updated_at BEFORE UPDATE ON hr_system.holidays
     FOR EACH ROW EXECUTE FUNCTION hr_system.update_updated_at_column();
 
 -- Insert sample employees (for testing)

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Home, Users, Clock, DollarSign, Settings } from 'lucide-react'
+import { Home, Users, Clock, DollarSign, Settings, Calendar } from 'lucide-react'
 
 const menuItems = [
   { path: '/dashboard', label: 'หน้าหลัก', icon: Home },
@@ -7,6 +7,7 @@ const menuItems = [
   { path: '/positions', label: 'จัดการตำแหน่งงาน', icon: Users },
   { path: '/attendance', label: 'บันทึกเวลา', icon: Clock },
   { path: '/payroll', label: 'คำนวณเงินเดือน', icon: DollarSign },
+  { path: '/calendar', label: 'ปฏิทินระบบ', icon: Calendar },
   { path: '/settings', label: 'ตั้งค่า', icon: Settings },
 ]
 

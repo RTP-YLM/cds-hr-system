@@ -55,6 +55,60 @@ export function calculateHourlyRate(dailyWage, workHoursPerDay = 8) {
 }
 
 /**
+ * คำนวณจำนวนวันทำงานในเดือน (หักวันหยุดประจำสัปดาห์และวันหยุดนักขัตฤกษ์)
+ * @param {number} year 
+ * @param {number} month (1-12)
+ * @param {object} options
+ * @param {number[]} options.weeklyOffDays (e.g. [0] for Sunday)
+ * @param {string[]} options.holidayDates (Array of date [YYYY-MM-DD])
+ * @param {string} options.saturdayMode ('all', 'none', 'biweekly')
+ * @returns {number} จำนวนวันทำงาน
+ */
+export function calculateWorkDaysInMonth(year, month, options = {}) {
+  const {
+    weeklyOffDays = [0],
+    holidayDates = [],
+    saturdayMode = 'biweekly'
+  } = options;
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  let workDays = 0;
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month - 1, day);
+    date.setHours(12, 0, 0, 0);
+    const dayOfWeek = date.getDay();
+
+    const Y = date.getFullYear();
+    const M = String(date.getMonth() + 1).padStart(2, '0');
+    const D = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${Y}-${M}-${D}`;
+
+    // 1. เช็ควันหยุดประจำสัปดาห์ (ไม่ใช่เสาร์)
+    if (dayOfWeek !== 6 && weeklyOffDays.includes(dayOfWeek)) continue;
+
+    // 2. เช็คกรณีวันเสาร์ (dayOfWeek === 6)
+    if (dayOfWeek === 6) {
+      if (saturdayMode === 'none') continue;
+      if (saturdayMode === 'all') {
+        if (weeklyOffDays.includes(6)) continue;
+      } else if (saturdayMode === 'biweekly') {
+        // เสาร์เว้นเสาร์ (เสาร์คู่หยุด โดยนับสัปดาห์จาก Epoch)
+        const weekIndex = Math.floor(date.getTime() / (7 * 24 * 60 * 60 * 1000));
+        if (weekIndex % 2 === 0) continue;
+      }
+    }
+
+    // 3. เช็ควันหยุดนักขัตฤกษ์
+    if (holidayDates.includes(dateStr)) continue;
+
+    workDays++;
+  }
+
+  return workDays;
+}
+
+/**
  * คำนวณอัตราต่อชั่วโมง สำหรับพนักงานรายเดือน
  * @param {number} monthlySalary - เงินเดือนรายเดือน
  * @param {number} workDaysPerMonth - จำนวนวันทำงานต่อเดือน
@@ -62,8 +116,8 @@ export function calculateHourlyRate(dailyWage, workHoursPerDay = 8) {
  * @returns {number} อัตราต่อชั่วโมง
  */
 export function calculateHourlyRateFromSalary(monthlySalary, workDaysPerMonth = 26, workHoursPerDay = 8) {
-  const dailyRate = monthlySalary / workDaysPerMonth;
-  return dailyRate / workHoursPerDay;
+  const dailyRate = monthlySalary / (workDaysPerMonth || 26);
+  return dailyRate / (workHoursPerDay || 8);
 }
 
 /**
@@ -102,16 +156,6 @@ export function calculateLeaveDeduction(isLeave, leaveType, dailyAmount, configs
 /**
  * คำนวณรายได้รายวัน (Daily Wage Calculation)
  * สำหรับพนักงานรายวัน
- *
- * @param {object} params - พารามิเตอร์
- * @param {number} params.dailyWage - ค่าแรงรายวัน
- * @param {number} params.mealAllowance - ค่าอาหาร
- * @param {number} params.otHours - ชั่วโมง OT
- * @param {number} params.lateMinutes - นาทีที่สาย
- * @param {boolean} params.isLeave - ลาหรือไม่
- * @param {string} params.leaveType - ประเภทการลา
- * @param {object} configs - การตั้งค่าระบบ
- * @returns {object} ผลการคำนวณ
  */
 export function calculateDailyWage(params, configs) {
   const {
@@ -123,29 +167,24 @@ export function calculateDailyWage(params, configs) {
     leaveType = null
   } = params;
 
-  // คำนวณอัตราต่อชั่วโมง
   const hourlyRate = calculateHourlyRate(
     dailyWage,
     parseFloat(configs.daily_work_hours || 8)
   );
 
-  // คำนวณ OT
   const otAmount = calculateOT(
     otHours,
     hourlyRate,
     parseFloat(configs.ot_rate_multiplier || 1.5)
   );
 
-  // คำนวณค่าปรับสาย
   const lateFine = calculateLateFine(
     lateMinutes,
     parseFloat(configs.late_fine_per_minute || 2.0)
   );
 
-  // คำนวณรายได้พื้นฐาน
   let baseAmount = dailyWage;
 
-  // ถ้าลางาน ให้คำนวณการหัก
   const leaveDeduction = calculateLeaveDeduction(
     isLeave,
     leaveType,
@@ -153,7 +192,6 @@ export function calculateDailyWage(params, configs) {
     configs
   );
 
-  // คำนวณยอดรวม
   const totalIncome = baseAmount + mealAllowance + otAmount;
   const totalDeduction = lateFine + leaveDeduction;
   const netAmount = totalIncome - totalDeduction;
@@ -166,7 +204,7 @@ export function calculateDailyWage(params, configs) {
     lateFine,
     leaveDeduction,
     totalDeduction,
-    netAmount: Math.max(0, netAmount), // ไม่ให้ติดลบ
+    netAmount: Math.max(0, netAmount),
     details: {
       hourlyRate,
       otHours,
@@ -177,20 +215,8 @@ export function calculateDailyWage(params, configs) {
 
 /**
  * คำนวณรายได้รายเดือน (Monthly Salary Calculation)
- * สำหรับพนักงานรายเดือน
- *
- * @param {object} params - พารามิเตอร์
- * @param {number} params.monthlySalary - เงินเดือนรายเดือน
- * @param {number} params.monthlyAllowance - เบี้ยเลี้ยงรายเดือน
- * @param {number} params.daysAttended - จำนวนวันที่เข้างาน (ไม่ลา)
- * @param {number} params.mealAllowancePerDay - ค่าอาหารต่อวัน
- * @param {number} params.totalOTAmount - เงิน OT รวมทั้งเดือน
- * @param {number} params.totalLateFine - ค่าปรับสายรวมทั้งเดือน
- * @param {number} params.totalLeaveDeduction - การหักลารวมทั้งเดือน
- * @param {object} configs - การตั้งค่าระบบ
- * @returns {object} ผลการคำนวณ
  */
-export function calculateMonthlySalary(params, configs) {
+export function calculateMonthlySalary(params, configs, calculatedWorkDays) {
   const {
     monthlySalary,
     monthlyAllowance = 0,
@@ -201,16 +227,14 @@ export function calculateMonthlySalary(params, configs) {
     totalLeaveDeduction = 0
   } = params;
 
-  const workDaysPerMonth = parseFloat(configs.work_days_per_month || 26);
+  // ใช้ค่าที่คำนวณมา ถ้าไม่มีให้ default 26
+  const workDaysPerMonth = calculatedWorkDays || 26;
 
-  // คำนวณเงินเดือนตามสัดส่วนวันที่เข้างาน
   const dailyRate = monthlySalary / workDaysPerMonth;
-  const baseSalary = monthlySalary; // เงินเดือนเต็ม
+  const baseSalary = monthlySalary;
 
-  // คำนวณค่าอาหารตามจำนวนวันที่เข้างาน
   const totalMealAllowance = mealAllowancePerDay * daysAttended;
 
-  // คำนวณยอดรวม
   const totalIncome = baseSalary + monthlyAllowance + totalMealAllowance + totalOTAmount;
   const totalDeduction = totalLateFine + totalLeaveDeduction;
   const netAmount = totalIncome - totalDeduction;
@@ -224,7 +248,7 @@ export function calculateMonthlySalary(params, configs) {
     totalLateFine,
     totalLeaveDeduction,
     totalDeduction,
-    netAmount: Math.max(0, netAmount), // ไม่ให้ติดลบ
+    netAmount: Math.max(0, netAmount),
     details: {
       dailyRate,
       daysAttended,
@@ -235,16 +259,11 @@ export function calculateMonthlySalary(params, configs) {
 
 /**
  * คำนวณเงินรายวันจากข้อมูล Attendance
- * @param {object} attendance - ข้อมูล attendance
- * @param {object} employee - ข้อมูลพนักงาน
- * @param {object} position - ข้อมูลตำแหน่ง
- * @param {object} configs - การตั้งค่าระบบ
- * @returns {number} ยอดเงินที่คำนวณได้
  */
-export function calculateAttendanceWage(attendance, employee, position, configs) {
+export function calculateAttendanceWage(attendance, employee, position, configs, calculatedWorkDays) {
   const lateMinutes = calculateLateMinutes(
     attendance.check_in_time,
-    configs.standard_check_in_time || '08:00:00'
+    employee.work_start_time || configs.standard_check_in_time || '08:00:00'
   );
 
   if (employee.employment_type === 'daily') {
@@ -260,16 +279,12 @@ export function calculateAttendanceWage(attendance, employee, position, configs)
     return result.netAmount;
   }
 
-  // สำหรับ monthly แยกคำนวณเป็นรายวัน แล้วรวมทั้งเดือนทีหลัง
-  const workDaysPerMonth = parseFloat(configs.work_days_per_month || 26);
+  // สำหรับ monthly ใช้ตัวหารไดนามิก
+  const workDaysPerMonth = calculatedWorkDays || 26;
   const dailyRate = parseFloat(employee.base_salary_or_wage) / workDaysPerMonth;
   const mealAllowance = parseFloat(position.meal_allowance_per_day || 0);
 
-  const hourlyRate = calculateHourlyRateFromSalary(
-    parseFloat(employee.base_salary_or_wage),
-    workDaysPerMonth,
-    parseFloat(configs.daily_work_hours || 8)
-  );
+  const hourlyRate = dailyRate / parseFloat(configs.daily_work_hours || 8);
 
   const otAmount = calculateOT(
     parseFloat(attendance.ot_hours || 0),
@@ -303,5 +318,6 @@ export default {
   calculateLeaveDeduction,
   calculateDailyWage,
   calculateMonthlySalary,
-  calculateAttendanceWage
+  calculateAttendanceWage,
+  calculateWorkDaysInMonth
 };

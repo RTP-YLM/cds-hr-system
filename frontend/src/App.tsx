@@ -7,6 +7,7 @@ import { AttendancePage } from '@/pages/AttendancePage'
 import { PayrollPage } from '@/pages/PayrollPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { PositionsPage } from '@/pages/PositionsPage'
+import { CalendarPage } from '@/pages/CalendarPage'
 
 function App() {
   return (
@@ -35,6 +36,9 @@ function App() {
 
           {/* Settings Route */}
           <Route path="/settings" element={<SettingsPage />} />
+
+          {/* Calendar Route */}
+          <Route path="/calendar" element={<CalendarPage />} />
         </Route>
       </Routes>
     </Router>

@@ -60,8 +60,8 @@ export const SettingsPage = () => {
       keys: ['leave_sick_deduction', 'leave_personal_deduction', 'leave_vacation_deduction']
     },
     payroll: {
-      title: 'เงินเดือน',
-      keys: ['work_days_per_month']
+      title: 'เงินเดือนและการทำงาน',
+      keys: ['saturday_work_mode', 'weekly_off_days']
     }
   }
 
@@ -74,14 +74,17 @@ export const SettingsPage = () => {
       'leave_sick_deduction': 'ลาป่วยหักเงิน (%)',
       'leave_personal_deduction': 'ลากิจหักเงิน (%)',
       'leave_vacation_deduction': 'ลาพักร้อนหักเงิน (%)',
-      'work_days_per_month': 'จำนวนวันทำงานต่อเดือน',
-      'daily_work_hours': 'จำนวนชั่วโมงทำงานต่อวัน'
+      'work_days_per_month': 'จำนวนวันทำงานต่อเดือน (กรณีทั่วไป)',
+      'daily_work_hours': 'จำนวนชั่วโมงทำงานต่อวัน',
+      'weekly_off_days': 'วันหยุดประจำสัปดาห์ (JSON: 0=อาทิตย์, ..., 6=เสาร์)',
+      'saturday_work_mode': 'โหมดวันเสาร์ (all=ทำทุกเสาร์, none=หยุดทุกเสาร์, biweekly=เสาร์เว้นเสาร์)'
     }
     return labels[key] || key
   }
 
   const getInputType = (key: string) => {
     if (key.includes('time')) return 'time'
+    if (key === 'saturday_work_mode' || key === 'weekly_off_days') return 'text'
     return 'number'
   }
 

@@ -2,8 +2,9 @@ import Attendance from '../models/Attendance.js';
 import Employee from '../models/Employee.js';
 import Position from '../models/Position.js';
 import SystemConfig from '../models/SystemConfig.js';
+import Holiday from '../models/Holiday.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
-import { calculateAttendanceWage, calculateLateMinutes } from '../utils/payrollCalculator.js';
+import { calculateAttendanceWage, calculateLateMinutes, calculateWorkDaysInMonth } from '../utils/payrollCalculator.js';
 
 /**
  * Attendance Controller
@@ -109,7 +110,24 @@ export const createAttendance = asyncHandler(async (req, res) => {
 
   // คำนวณค่าแรง/เงินเดือนรายวัน
   if (!data.calculated_wage_daily) {
-    data.calculated_wage_daily = calculateAttendanceWage(data, employee, position, configs);
+    // คำนวณวันทำงานในเดือนนั้นแบบ dynamic
+    const recordDate = new Date(data.date);
+    const year = recordDate.getFullYear();
+    const month = recordDate.getMonth() + 1;
+
+    const holidays = await Holiday.getAll(year);
+    const holidayDates = holidays.map(h => {
+      const d = new Date(h.date);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    });
+
+    const workDaysInMonth = calculateWorkDaysInMonth(year, month, {
+      weeklyOffDays: configs.weekly_off_days || [0],
+      holidayDates,
+      saturdayMode: configs.saturday_work_mode || 'biweekly'
+    });
+
+    data.calculated_wage_daily = calculateAttendanceWage(data, employee, position, configs, workDaysInMonth);
   }
 
   const record = await Attendance.create(data);
@@ -153,7 +171,23 @@ export const updateAttendance = asyncHandler(async (req, res) => {
   };
 
   // คำนวณค่าแรง/เงินเดือนรายวันใหม่
-  data.calculated_wage_daily = calculateAttendanceWage(updatedData, employee, position, configs);
+  const recordDate = new Date(updatedData.date);
+  const year = recordDate.getFullYear();
+  const month = recordDate.getMonth() + 1;
+
+  const holidays = await Holiday.getAll(year);
+  const holidayDates = holidays.map(h => {
+    const d = new Date(h.date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
+
+  const workDaysInMonth = calculateWorkDaysInMonth(year, month, {
+    weeklyOffDays: configs.weekly_off_days || [0],
+    holidayDates,
+    saturdayMode: configs.saturday_work_mode || 'biweekly'
+  });
+
+  data.calculated_wage_daily = calculateAttendanceWage(updatedData, employee, position, configs, workDaysInMonth);
 
   const updated = await Attendance.update(req.params.id, data);
 
@@ -236,8 +270,24 @@ export const batchUpsertAttendance = asyncHandler(async (req, res) => {
       attendanceData.late_minutes = 0;
     }
 
+    // คำนวณวันทำงานในเดือนนั้น
+    const recordDate = new Date(date);
+    const year = recordDate.getFullYear();
+    const month = recordDate.getMonth() + 1;
+    const holidays = await Holiday.getAll(year);
+    const holidayDates = holidays.map(h => {
+      const d = new Date(h.date);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    });
+
+    const workDaysInMonth = calculateWorkDaysInMonth(year, month, {
+      weeklyOffDays: configs.weekly_off_days || [0],
+      holidayDates,
+      saturdayMode: configs.saturday_work_mode || 'biweekly'
+    });
+
     // คำนวณค่าแรง
-    attendanceData.calculated_wage_daily = calculateAttendanceWage(attendanceData, employee, position, configs);
+    attendanceData.calculated_wage_daily = calculateAttendanceWage(attendanceData, employee, position, configs, workDaysInMonth);
 
     const record = await Attendance.upsert(attendanceData);
     results.push(record);
