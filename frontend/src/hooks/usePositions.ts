@@ -29,6 +29,7 @@ export const usePositions = () => {
 
   const createPosition = async (data: any) => {
     setLoading(true)
+    setError(null)
     try {
       const response = await fetch(`${API_URL}/positions`, {
         method: 'POST',
@@ -38,12 +39,13 @@ export const usePositions = () => {
       const result = await response.json()
       if (result.success) {
         await fetchPositions()
-        return result.data
+        return result
       }
-      return null
+      setError(result.message)
+      return result
     } catch (err: any) {
       setError(err.message)
-      return null
+      return { success: false, message: err.message }
     } finally {
       setLoading(false)
     }
@@ -51,6 +53,7 @@ export const usePositions = () => {
 
   const updatePosition = async (id: number, data: any) => {
     setLoading(true)
+    setError(null)
     try {
       const response = await fetch(`${API_URL}/positions/${id}`, {
         method: 'PATCH',
@@ -60,12 +63,13 @@ export const usePositions = () => {
       const result = await response.json()
       if (result.success) {
         await fetchPositions()
-        return result.data
+        return result
       }
-      return null
+      setError(result.message)
+      return result
     } catch (err: any) {
       setError(err.message)
-      return null
+      return { success: false, message: err.message }
     } finally {
       setLoading(false)
     }
@@ -73,6 +77,7 @@ export const usePositions = () => {
 
   const deletePosition = async (id: number) => {
     setLoading(true)
+    setError(null)
     try {
       const response = await fetch(`${API_URL}/positions/${id}`, {
         method: 'DELETE',
@@ -80,12 +85,13 @@ export const usePositions = () => {
       const result = await response.json()
       if (result.success) {
         await fetchPositions()
-        return true
+        return result
       }
-      return false
+      setError(result.message)
+      return result
     } catch (err: any) {
       setError(err.message)
-      return false
+      return { success: false, message: err.message }
     } finally {
       setLoading(false)
     }

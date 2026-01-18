@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
 import { formatCurrency } from '@/lib/utils'
+import { useToast } from '@/context/ToastContext'
 
 export const PositionsPage = () => {
     const { positions, loading, error, createPosition, updatePosition, deletePosition } = usePositions()
+    const { showToast } = useToast()
     const [searchTerm, setSearchTerm] = useState('')
     const [showModal, setShowModal] = useState(false)
     const [editingItem, setEditingItem] = useState<any>(null)
@@ -45,23 +47,31 @@ export const PositionsPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (editingItem) {
-            const success = await updatePosition(editingItem.id, form)
-            if (success) {
+            const result = await updatePosition(editingItem.id, form)
+            if (result.success) {
+                showToast('อัพเดทตำแหน่งสำเร็จ', 'success')
                 setShowModal(false)
+            } else {
+                showToast(result.message || 'เกิดข้อผิดพลาดในการอัพเดท', 'error')
             }
         } else {
-            const success = await createPosition(form)
-            if (success) {
+            const result = await createPosition(form)
+            if (result.success) {
+                showToast('เพิ่มตำแหน่งสำเร็จ', 'success')
                 setShowModal(false)
+            } else {
+                showToast(result.message || 'เกิดข้อผิดพลาดในการเพิ่มตำแหน่ง', 'error')
             }
         }
     }
 
     const handleDelete = async (id: number, name: string) => {
         if (window.confirm(`ต้องการลบตำแหน่ง ${name} ใช่หรือไม่?`)) {
-            const success = await deletePosition(id)
-            if (success) {
-                alert('ลบข้อมูลสำเร็จ')
+            const result = await deletePosition(id)
+            if (result.success) {
+                showToast('ลบข้อมูลสำเร็จ', 'success')
+            } else {
+                showToast(result.message || 'เกิดข้อผิดพลาดในการลบ', 'error')
             }
         }
     }

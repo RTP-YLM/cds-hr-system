@@ -40,14 +40,14 @@ export const useConfig = () => {
 
       if (result.success) {
         await fetchConfigs()
-        return result.data
+        return result
       } else {
         setError(result.message)
-        return null
+        return result
       }
     } catch (err: any) {
       setError(err.message)
-      return null
+      return { success: false, message: err.message }
     } finally {
       setLoading(false)
     }

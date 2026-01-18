@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { formatCurrency, getMonthOptions } from '@/lib/utils'
+import { useToast } from '@/context/ToastContext'
 
 export const PayrollPage = () => {
   const { employees } = useEmployees()
   const { getAttendanceByMonth, loading } = useAttendance()
+  const { showToast } = useToast()
 
   const [selectedEmployee, setSelectedEmployee] = useState<number>(0)
   const [selectedMonth, setSelectedMonth] = useState<string>(
@@ -19,13 +21,16 @@ export const PayrollPage = () => {
 
   const handleCalculate = async () => {
     if (!selectedEmployee || selectedEmployee === 0) {
-      alert('กรุณาเลือกพนักงาน')
+      showToast('กรุณาเลือกพนักงาน', 'warning')
       return
     }
 
     const data = await getAttendanceByMonth(selectedEmployee, selectedMonth)
     if (data) {
       setPayrollData(data)
+      showToast('คำนวณเงินเดือนสำเร็จ', 'success')
+    } else {
+      showToast('ไม่พบข้อมูลการเข้างานในเดือนที่เลือก', 'error')
     }
   }
 

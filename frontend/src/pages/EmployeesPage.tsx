@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
 import { formatCurrency, translateEmployeeStatus, translateEmploymentType } from '@/lib/utils'
 import { useNavigate } from 'react-router-dom'
+import { useToast } from '@/context/ToastContext'
 
 export const EmployeesPage = () => {
   const navigate = useNavigate()
   const { employees, loading, error, deleteEmployee } = useEmployees()
+  const { showToast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
 
   const filteredEmployees = employees.filter(emp =>
@@ -19,9 +21,11 @@ export const EmployeesPage = () => {
 
   const handleDelete = async (id: number, name: string) => {
     if (window.confirm(`ต้องการลบพนักงาน ${name} ใช่หรือไม่?`)) {
-      const success = await deleteEmployee(id)
-      if (success) {
-        alert('ลบพนักงานสำเร็จ')
+      const result = await deleteEmployee(id)
+      if (result.success) {
+        showToast('ลบพนักงานสำเร็จ', 'success')
+      } else {
+        showToast(result.message || 'เกิดข้อผิดพลาดในการลบ', 'error')
       }
     }
   }
@@ -127,12 +131,11 @@ export const EmployeesPage = () => {
                         {formatCurrency(employee.base_salary_or_wage)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          employee.status === 'permanent' ? 'bg-green-100 text-green-800' :
-                          employee.status === 'probation' ? 'bg-yellow-100 text-yellow-800' :
-                          employee.status === 'resigned' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span className={`px-2 py-1 text-xs rounded-full ${employee.status === 'permanent' ? 'bg-green-100 text-green-800' :
+                            employee.status === 'probation' ? 'bg-yellow-100 text-yellow-800' :
+                              employee.status === 'resigned' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                          }`}>
                           {translateEmployeeStatus(employee.status)}
                         </span>
                       </td>

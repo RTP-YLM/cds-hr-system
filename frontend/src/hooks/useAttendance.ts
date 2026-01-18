@@ -65,14 +65,14 @@ export const useAttendance = () => {
 
       if (result.success) {
         await fetchAttendances()
-        return result.data
+        return result
       } else {
         setError(result.message)
-        return null
+        return result
       }
     } catch (err: any) {
       setError(err.message)
-      return null
+      return { success: false, message: err.message }
     } finally {
       setLoading(false)
     }
@@ -92,14 +92,14 @@ export const useAttendance = () => {
 
       if (result.success) {
         await fetchAttendances()
-        return result.data
+        return result
       } else {
         setError(result.message)
-        return null
+        return result
       }
     } catch (err: any) {
       setError(err.message)
-      return null
+      return { success: false, message: err.message }
     } finally {
       setLoading(false)
     }
@@ -117,14 +117,14 @@ export const useAttendance = () => {
 
       if (result.success) {
         await fetchAttendances()
-        return true
+        return result
       } else {
         setError(result.message)
-        return false
+        return result
       }
     } catch (err: any) {
       setError(err.message)
-      return false
+      return { success: false, message: err.message }
     } finally {
       setLoading(false)
     }
@@ -144,14 +144,14 @@ export const useAttendance = () => {
 
       if (result.success) {
         await fetchAttendances()
-        return result.data
+        return result
       } else {
         setError(result.message)
-        return null
+        return result
       }
     } catch (err: any) {
       setError(err.message)
-      return null
+      return { success: false, message: err.message }
     } finally {
       setLoading(false)
     }

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { formatCurrency, formatDate, formatTime, cn } from '@/lib/utils'
+import { useToast } from '@/context/ToastContext'
 
 interface BatchItem {
   employee_id: number;
@@ -24,6 +25,7 @@ interface BatchItem {
 export const AttendancePage = () => {
   const { attendances, loading, error, createBatchAttendance, fetchAttendances } = useAttendance()
   const { employees } = useEmployees()
+  const { showToast } = useToast()
 
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [batchItems, setBatchItems] = useState<BatchItem[]>([])
@@ -55,7 +57,7 @@ export const AttendancePage = () => {
 
   const handleAddEmployee = (empId: number) => {
     if (batchItems.find(item => item.employee_id === empId)) {
-      alert('พนักงานคนนี้อยู่ในรายการแล้ว')
+      showToast('พนักงานคนนี้อยู่ในรายการแล้ว', 'warning')
       return
     }
 
@@ -95,7 +97,7 @@ export const AttendancePage = () => {
 
   const handleSubmitBatch = async () => {
     if (batchItems.length === 0) {
-      alert('กรุณาเพิ่มพนักงานอย่างน้อย 1 คน')
+      showToast('กรุณาเพิ่มพนักงานอย่างน้อย 1 คน', 'warning')
       return
     }
 
@@ -113,11 +115,13 @@ export const AttendancePage = () => {
     }
 
     const result = await createBatchAttendance(data)
-    if (result) {
-      alert('บันทึกข้อมูลสำเร็จ')
+    if (result.success) {
+      showToast('บันทึกข้อมูลสำเร็จ', 'success')
       setBatchItems([])
       setShowBatchForm(false)
       fetchAttendances({ date: selectedDate })
+    } else {
+      showToast(result.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error')
     }
   }
 

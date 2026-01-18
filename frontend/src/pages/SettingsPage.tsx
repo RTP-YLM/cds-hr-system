@@ -4,9 +4,11 @@ import { useConfig } from '@/hooks/useConfig'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
+import { useToast } from '@/context/ToastContext'
 
 export const SettingsPage = () => {
   const { configs, loading, updateConfig, fetchConfigs } = useConfig()
+  const { showToast } = useToast()
   const [formData, setFormData] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
 
@@ -27,18 +29,28 @@ export const SettingsPage = () => {
   const handleSave = async (key: string) => {
     setSaving(true)
     const result = await updateConfig(key, formData[key])
-    if (result) {
-      alert('บันทึกการตั้งค่าสำเร็จ')
+    if (result.success) {
+      showToast('บันทึกการตั้งค่าสำเร็จ', 'success')
+    } else {
+      showToast(result.message || 'เกิดข้อผิดพลาดในการบันทึก', 'error')
     }
     setSaving(false)
   }
 
   const handleSaveAll = async () => {
     setSaving(true)
+    let hasError = false
     for (const key of Object.keys(formData)) {
-      await updateConfig(key, formData[key])
+      const result = await updateConfig(key, formData[key])
+      if (!result.success) {
+        hasError = true
+      }
     }
-    alert('บันทึกการตั้งค่าทั้งหมดสำเร็จ')
+    if (hasError) {
+      showToast('บันทึกการตั้งค่าบางรายการไม่สำเร็จ', 'warning')
+    } else {
+      showToast('บันทึกการตั้งค่าทั้งหมดสำเร็จ', 'success')
+    }
     setSaving(false)
   }
 

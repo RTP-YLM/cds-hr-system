@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { holidayService, Holiday } from '@/services/holidayService'
+import { useToast } from '@/context/ToastContext'
 
 export const CalendarPage = () => {
     const [holidays, setHolidays] = useState<Holiday[]>([])
     const [loading, setLoading] = useState(true)
+    const { showToast } = useToast()
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
     const [newHoliday, setNewHoliday] = useState({
         date: '',
@@ -40,6 +42,7 @@ export const CalendarPage = () => {
 
         try {
             await holidayService.createHoliday(newHoliday)
+            showToast('บันทึกวันหยุดสำเร็จ', 'success')
             setNewHoliday({
                 date: '',
                 name: '',
@@ -49,7 +52,7 @@ export const CalendarPage = () => {
             fetchHolidays()
         } catch (error) {
             console.error('Failed to add holiday:', error)
-            alert('ไม่สามารถเพิ่มวันหยุดได้')
+            showToast('ไม่สามารถเพิ่มวันหยุดได้', 'error')
         }
     }
 
@@ -57,9 +60,11 @@ export const CalendarPage = () => {
         if (!confirm('ยืนยันการลบวันหยุดนี้?')) return
         try {
             await holidayService.deleteHoliday(id)
+            showToast('ลบวันหยุดสำเร็จ', 'success')
             fetchHolidays()
         } catch (error) {
             console.error('Failed to delete holiday:', error)
+            showToast('ไม่สามารถลบวันหยุดได้', 'error')
         }
     }
 

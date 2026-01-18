@@ -25,13 +25,16 @@ export const phoneSchema = z.string()
   .length(10, 'เบอร์โทรศัพท์ต้องมี 10 หลัก')
   .regex(/^0\d{9}$/, 'เบอร์โทรศัพท์ต้องเริ่มต้นด้วย 0 และมี 10 หลัก');
 
-// Validator สำหรับวันที่
+// Validator สำหรับวันที่ (รองรับทั้ง YYYY-MM-DD และ ISO String)
 export const dateSchema = z.string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'รูปแบบวันที่ต้องเป็น YYYY-MM-DD')
   .refine((val) => {
+    if (!val || val === '') return false;
+    // รองรับ YYYY-MM-DD หรือแบบที่มีเวลาต่อท้าย (ISO String)
+    const datePart = val.split('T')[0];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return false;
     const date = new Date(val);
     return !isNaN(date.getTime());
-  }, 'วันที่ไม่ถูกต้อง');
+  }, 'รูปแบบวันที่ต้องเป็น YYYY-MM-DD และเป็นวันที่ที่ถูกต้อง');
 
 // Validator สำหรับเวลา
 export const timeSchema = z.string()
@@ -52,17 +55,18 @@ export const employeeSchema = z.object({
     return /^0\d{9}$/.test(val);
   }, 'เบอร์โทรศัพท์ต้องเริ่มต้นด้วย 0 และมี 10 หลัก'),
   nationality: z.string().default('ไทย'),
-  birth_date: z.string().optional().refine((val) => {
+  birth_date: z.string().nullable().optional().refine((val) => {
     if (!val || val === '') return true;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) return false;
+    const datePart = val.split('T')[0];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return false;
     const date = new Date(val);
     return !isNaN(date.getTime());
   }, 'รูปแบบวันที่ต้องเป็น YYYY-MM-DD'),
   hired_date: dateSchema,
-  position_id: z.number().int().positive(),
+  position_id: z.coerce.number().int().positive(),
   status: z.enum(['probation', 'internship', 'part-time', 'permanent', 'resigned']).default('probation'),
   employment_type: z.enum(['daily', 'monthly']),
-  base_salary_or_wage: z.number().positive('เงินเดือน/ค่าแรงต้องมากกว่า 0'),
+  base_salary_or_wage: z.coerce.number().positive('เงินเดือน/ค่าแรงต้องมากกว่า 0'),
   bank_name: z.string().optional(),
   bank_account_no: z.string().optional(),
   work_start_time: z.string().optional(),

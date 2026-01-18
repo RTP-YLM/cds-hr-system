@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Upload } from 'lucide-react'
 import { useEmployees } from '@/hooks/useEmployees'
 import { usePositions } from '@/hooks/usePositions'
+import { useToast } from '@/context/ToastContext'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -16,6 +17,7 @@ export const EmployeeFormPage = () => {
 
   const { createEmployee, updateEmployee, getEmployee, loading } = useEmployees()
   const { positions } = usePositions()
+  const { showToast } = useToast()
 
   const [formData, setFormData] = useState<CreateEmployeeInput>({
     prefix: '',
@@ -128,9 +130,18 @@ export const EmployeeFormPage = () => {
       ? await updateEmployee(parseInt(id!), submitData, files)
       : await createEmployee(submitData, files)
 
-    if (result) {
-      alert(isEditMode ? 'อัพเดทข้อมูลสำเร็จ' : 'เพิ่มพนักงานสำเร็จ')
+    if (result.success) {
+      showToast(isEditMode ? 'อัพเดทข้อมูลสำเร็จ' : 'เพิ่มพนักงานสำเร็จ', 'success')
       navigate('/employees')
+    } else {
+      showToast(result.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error')
+      if (result.errors) {
+        const serverErrors: Record<string, string> = {}
+        result.errors.forEach((err: any) => {
+          serverErrors[err.path] = err.message
+        })
+        setErrors(serverErrors)
+      }
     }
   }
 
