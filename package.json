@@ -9,7 +9,7 @@
     "build": "if [ -n \"$ROOT_DIRECTORY\" ] && [ -f \"$ROOT_DIRECTORY/package.json\" ]; then cd $ROOT_DIRECTORY && npm run build; else echo 'No build step required'; fi"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=20.0.0",
     "npm": ">=9.0.0"
   },
   "repository": {
