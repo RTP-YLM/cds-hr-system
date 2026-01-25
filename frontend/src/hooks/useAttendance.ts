@@ -51,6 +51,28 @@ export const useAttendance = () => {
     }
   }
 
+  // ดึงข้อมูลการเข้างานตามพนักงานและช่วงวันที่
+  const getAttendanceByRange = async (employeeId: number, startDate: string, endDate: string): Promise<AttendanceMonthData | null> => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await fetch(`${API_URL}/attendance/employee/${employeeId}/range?start_date=${startDate}&end_date=${endDate}`)
+      const result = await response.json()
+
+      if (result.success) {
+        return result.data
+      } else {
+        setError(result.message)
+        return null
+      }
+    } catch (err: any) {
+      setError(err.message)
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // สร้างบันทึกการเข้างาน
   const createAttendance = async (data: CreateAttendanceInput) => {
     setLoading(true)
@@ -163,6 +185,7 @@ export const useAttendance = () => {
     error,
     fetchAttendances,
     getAttendanceByMonth,
+    getAttendanceByRange,
     createAttendance,
     createBatchAttendance,
     updateAttendance,

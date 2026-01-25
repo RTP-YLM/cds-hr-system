@@ -15,6 +15,7 @@ export interface Attendance {
   late_minutes: number;
   is_leave: boolean;
   leave_type?: LeaveType | string;
+  leave_hours: number;
   calculated_wage_daily: number;
   notes?: string;
   created_at: string;
@@ -40,11 +41,12 @@ export interface CreateAttendanceInput {
   late_minutes?: number;
   is_leave?: boolean;
   leave_type?: LeaveType | string;
+  leave_hours?: number;
   calculated_wage_daily?: number;
   notes?: string;
 }
 
-export interface UpdateAttendanceInput extends Partial<CreateAttendanceInput> {}
+export interface UpdateAttendanceInput extends Partial<CreateAttendanceInput> { }
 
 export interface AttendanceSummary {
   total_days: string;
@@ -53,6 +55,7 @@ export interface AttendanceSummary {
   total_ot_hours: string;
   total_ot_amount: string;
   total_late_minutes: string;
+  total_leave_hours: string;
   total_wage: string;
 }
 

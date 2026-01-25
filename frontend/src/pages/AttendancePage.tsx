@@ -18,6 +18,7 @@ interface BatchItem {
   ot_hours: number;
   is_leave: boolean;
   leave_type: string;
+  leave_hours: number;
   notes: string;
   default_start?: string;
 }
@@ -47,6 +48,7 @@ export const AttendancePage = () => {
         ot_hours: existing ? Number(existing.ot_hours) : 0,
         is_leave: existing ? existing.is_leave : false,
         leave_type: existing ? (existing.leave_type || 'ลาป่วย') : 'ลาป่วย',
+        leave_hours: existing ? Number(existing.leave_hours || 0) : 0,
         notes: existing ? (existing.notes || '') : '',
         default_start: emp.work_start_time?.substring(0, 5)
       }
@@ -74,6 +76,7 @@ export const AttendancePage = () => {
         ot_hours: existing ? Number(existing.ot_hours) : 0,
         is_leave: existing ? existing.is_leave : false,
         leave_type: existing ? (existing.leave_type || 'ลาป่วย') : 'ลาป่วย',
+        leave_hours: existing ? Number(existing.leave_hours || 0) : 0,
         notes: existing ? (existing.notes || '') : '',
         default_start: emp.work_start_time?.substring(0, 5)
       }
@@ -110,6 +113,7 @@ export const AttendancePage = () => {
         ot_hours: item.ot_hours,
         is_leave: item.is_leave,
         leave_type: item.is_leave ? item.leave_type : null,
+        leave_hours: item.is_leave ? item.leave_hours : 0,
         notes: item.notes || ''
       }))
     }
@@ -194,6 +198,7 @@ export const AttendancePage = () => {
                     <th className="px-4 py-3 text-center font-bold">สถานะ</th>
                     <th className="px-4 py-3 text-center font-bold">เวลาเข้า</th>
                     <th className="px-4 py-3 text-center font-bold">เวลาออก</th>
+                    <th className="px-4 py-3 text-center font-bold">ลา (ชม.)</th>
                     <th className="px-4 py-3 text-center font-bold">OT (ชม.)</th>
                     <th className="px-4 py-3 text-left font-bold">หมายเหตุ</th>
                     <th className="px-4 py-3 text-center font-bold">จัดการ</th>
@@ -233,7 +238,7 @@ export const AttendancePage = () => {
                       <td className="px-4 py-3 text-center">
                         <input
                           type="time"
-                          disabled={item.is_leave}
+                          disabled={item.is_leave && item.leave_hours === 0}
                           value={item.check_in_time}
                           onChange={(e) => handleUpdateItem(item.employee_id, 'check_in_time', e.target.value)}
                           className="border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-30"
@@ -242,10 +247,22 @@ export const AttendancePage = () => {
                       <td className="px-4 py-3 text-center">
                         <input
                           type="time"
-                          disabled={item.is_leave}
+                          disabled={item.is_leave && item.leave_hours === 0}
                           value={item.check_out_time}
                           onChange={(e) => handleUpdateItem(item.employee_id, 'check_out_time', e.target.value)}
                           className="border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-30"
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <input
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          max="8"
+                          disabled={!item.is_leave}
+                          value={item.leave_hours}
+                          onChange={(e) => handleUpdateItem(item.employee_id, 'leave_hours', Number(e.target.value))}
+                          className="w-16 border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center disabled:opacity-30"
                         />
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -316,6 +333,7 @@ export const AttendancePage = () => {
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">พนักงาน</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">เวลาเข้า</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">เวลาออก</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">ลา (ชม.)</th>
                   <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">OT (ชม.)</th>
                   <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">สาย (นาที)</th>
                   <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">สถานะ</th>
@@ -353,6 +371,13 @@ export const AttendancePage = () => {
                           <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
                           {formatTime(att.check_out_time)}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {att.leave_hours > 0 ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-orange-100 text-orange-700">
+                            {att.leave_hours} ชม.
+                          </span>
+                        ) : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         {att.ot_hours > 0 ? (

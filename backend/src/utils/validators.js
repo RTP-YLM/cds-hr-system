@@ -87,6 +87,7 @@ export const attendanceSchema = z.object({
   late_minutes: z.number().int().min(0).default(0),
   is_leave: z.boolean().default(false),
   leave_type: z.string().nullable().optional(),
+  leave_hours: z.number().min(0).max(24).default(0),
   calculated_wage_daily: z.number().min(0).default(0),
   notes: z.string().nullable().optional(),
 }).refine((data) => {
@@ -109,6 +110,7 @@ export const attendanceUpdateSchema = z.object({
   late_minutes: z.number().int().min(0).optional(),
   is_leave: z.boolean().optional(),
   leave_type: z.string().nullable().optional(),
+  leave_hours: z.number().min(0).max(24).optional(),
   calculated_wage_daily: z.number().min(0).optional(),
   notes: z.string().nullable().optional(),
 });
@@ -123,6 +125,7 @@ export const batchAttendanceSchema = z.object({
     ot_hours: z.number().min(0).max(24).default(0),
     is_leave: z.boolean().default(false),
     leave_type: z.string().nullable().optional(),
+    leave_hours: z.number().min(0).max(24).default(0),
     notes: z.string().nullable().optional(),
   }))
 });
@@ -146,6 +149,12 @@ export const systemConfigSchema = z.object({
 export const attendanceQuerySchema = z.object({
   employee_id: z.string().regex(/^\d+$/).transform(Number),
   month: z.string().regex(/^\d{4}-\d{2}$/, 'รูปแบบเดือนต้องเป็น YYYY-MM'),
+});
+
+// Range Query Schema
+export const attendanceRangeQuerySchema = z.object({
+  start_date: dateSchema,
+  end_date: dateSchema,
 });
 
 /**
@@ -233,6 +242,7 @@ export default {
   positionSchema,
   systemConfigSchema,
   attendanceQuerySchema,
+  attendanceRangeQuerySchema,
   validateBody,
   validateQuery,
   validateParams

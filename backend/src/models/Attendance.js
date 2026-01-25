@@ -81,6 +81,24 @@ export class Attendance {
   }
 
   /**
+   * ดึงข้อมูลการเข้างานของพนักงานตามช่วงวันที่กำหนด
+   */
+  static async getByEmployeeRange(employeeId, startDate, endDate) {
+    const sql = `
+      SELECT a.*, e.first_name, e.last_name, e.employment_type,
+             e.base_salary_or_wage, p.meal_allowance_per_day, p.monthly_allowance
+      FROM attendance a
+      JOIN employees e ON a.employee_id = e.id
+      LEFT JOIN positions p ON e.position_id = p.id
+      WHERE a.employee_id = $1
+      AND a.date BETWEEN $2 AND $3
+      ORDER BY a.date ASC
+    `;
+    const result = await query(sql, [employeeId, startDate, endDate]);
+    return result.rows;
+  }
+
+  /**
    * ดึงข้อมูลการเข้างานของพนักงานในวันที่กำหนด
    */
   static async getByEmployeeDate(employeeId, date) {
@@ -99,9 +117,9 @@ export class Attendance {
     const sql = `
       INSERT INTO attendance (
         employee_id, date, check_in_time, check_out_time,
-        ot_hours, ot_amount, late_minutes, is_leave, leave_type,
+        ot_hours, ot_amount, late_minutes, is_leave, leave_type, leave_hours,
         calculated_wage_daily, notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `;
 
@@ -115,6 +133,7 @@ export class Attendance {
       data.late_minutes || 0,
       data.is_leave || false,
       data.leave_type,
+      data.leave_hours || 0,
       data.calculated_wage_daily || 0,
       data.notes
     ];
@@ -162,9 +181,9 @@ export class Attendance {
     const sql = `
       INSERT INTO attendance (
         employee_id, date, check_in_time, check_out_time,
-        ot_hours, ot_amount, late_minutes, is_leave, leave_type,
+        ot_hours, ot_amount, late_minutes, is_leave, leave_type, leave_hours,
         calculated_wage_daily, notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       ON CONFLICT (employee_id, date) 
       DO UPDATE SET
         check_in_time = EXCLUDED.check_in_time,
@@ -174,6 +193,7 @@ export class Attendance {
         late_minutes = EXCLUDED.late_minutes,
         is_leave = EXCLUDED.is_leave,
         leave_type = EXCLUDED.leave_type,
+        leave_hours = EXCLUDED.leave_hours,
         calculated_wage_daily = EXCLUDED.calculated_wage_daily,
         notes = EXCLUDED.notes,
         updated_at = CURRENT_TIMESTAMP
@@ -190,6 +210,7 @@ export class Attendance {
       data.late_minutes || 0,
       data.is_leave || false,
       data.leave_type,
+      data.leave_hours || 0,
       data.calculated_wage_daily || 0,
       data.notes
     ];
@@ -219,12 +240,35 @@ export class Attendance {
         SUM(ot_hours) as total_ot_hours,
         SUM(ot_amount) as total_ot_amount,
         SUM(late_minutes) as total_late_minutes,
+        SUM(leave_hours) as total_leave_hours,
         SUM(calculated_wage_daily) as total_wage
       FROM attendance
       WHERE employee_id = $1
       AND TO_CHAR(date, 'YYYY-MM') = $2
     `;
     const result = await query(sql, [employeeId, month]);
+    return result.rows[0];
+  }
+
+  /**
+   * สรุปการเข้างานของพนักงานตามช่วงวันที่กำหนด
+   */
+  static async getSummaryByRange(employeeId, startDate, endDate) {
+    const sql = `
+      SELECT
+        COUNT(*) as total_days,
+        COUNT(*) FILTER (WHERE is_leave = false) as days_attended,
+        COUNT(*) FILTER (WHERE is_leave = true) as days_leave,
+        SUM(ot_hours) as total_ot_hours,
+        SUM(ot_amount) as total_ot_amount,
+        SUM(late_minutes) as total_late_minutes,
+        SUM(leave_hours) as total_leave_hours,
+        SUM(calculated_wage_daily) as total_wage
+      FROM attendance
+      WHERE employee_id = $1
+      AND date BETWEEN $2 AND $3
+    `;
+    const result = await query(sql, [employeeId, startDate, endDate]);
     return result.rows[0];
   }
 

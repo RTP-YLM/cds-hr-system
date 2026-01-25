@@ -126,12 +126,14 @@ export function calculateHourlyRateFromSalary(monthlySalary, workDaysPerMonth = 
  * @param {string} leaveType - ประเภทการลา (sick, personal, vacation)
  * @param {number} dailyAmount - จำนวนเงินรายวัน
  * @param {object} configs - การตั้งค่าระบบ
+ * @param {number} leaveHours - จำนวนชั่วโมงลา
  * @returns {number} จำนวนเงินที่หัก
  */
-export function calculateLeaveDeduction(isLeave, leaveType, dailyAmount, configs) {
+export function calculateLeaveDeduction(isLeave, leaveType, dailyAmount, configs, leaveHours = 0) {
   if (!isLeave) return 0;
 
   let deductionPercent = 0;
+  const workHoursPerDay = parseFloat(configs.daily_work_hours || 8);
 
   switch (leaveType) {
     case 'sick':
@@ -150,6 +152,13 @@ export function calculateLeaveDeduction(isLeave, leaveType, dailyAmount, configs
       deductionPercent = 100; // หักเต็มถ้าไม่ระบุประเภท
   }
 
+  // ถ้าเป็นการลารายชั่วโมง
+  if (leaveHours > 0 && leaveHours < workHoursPerDay) {
+    const hourlyRate = dailyAmount / workHoursPerDay;
+    return (hourlyRate * leaveHours * deductionPercent) / 100;
+  }
+
+  // ลาเต็มวัน
   return (dailyAmount * deductionPercent) / 100;
 }
 
@@ -164,7 +173,8 @@ export function calculateDailyWage(params, configs) {
     otHours = 0,
     lateMinutes = 0,
     isLeave = false,
-    leaveType = null
+    leaveType = null,
+    leaveHours = 0
   } = params;
 
   const hourlyRate = calculateHourlyRate(
@@ -189,7 +199,8 @@ export function calculateDailyWage(params, configs) {
     isLeave,
     leaveType,
     dailyWage + mealAllowance,
-    configs
+    configs,
+    leaveHours
   );
 
   const totalIncome = baseAmount + mealAllowance + otAmount;
@@ -208,7 +219,8 @@ export function calculateDailyWage(params, configs) {
     details: {
       hourlyRate,
       otHours,
-      lateMinutes
+      lateMinutes,
+      leaveHours
     }
   };
 }
@@ -273,7 +285,8 @@ export function calculateAttendanceWage(attendance, employee, position, configs,
       otHours: parseFloat(attendance.ot_hours || 0),
       lateMinutes: lateMinutes,
       isLeave: attendance.is_leave,
-      leaveType: attendance.leave_type
+      leaveType: attendance.leave_type,
+      leaveHours: parseFloat(attendance.leave_hours || 0)
     }, configs);
 
     return result.netAmount;
@@ -301,7 +314,8 @@ export function calculateAttendanceWage(attendance, employee, position, configs,
     attendance.is_leave,
     attendance.leave_type,
     dailyRate + mealAllowance,
-    configs
+    configs,
+    parseFloat(attendance.leave_hours || 0)
   );
 
   const netAmount = dailyRate + mealAllowance + otAmount - lateFine - leaveDeduction;

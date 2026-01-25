@@ -1,23 +1,64 @@
 import { useState } from 'react'
-import { Calculator, Download } from 'lucide-react'
+import { Calculator, Download, Plus, Trash2 } from 'lucide-react'
 import { useEmployees } from '@/hooks/useEmployees'
 import { useAttendance } from '@/hooks/useAttendance'
 import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-import { formatCurrency, getMonthOptions } from '@/lib/utils'
+import { formatCurrency, formatDate, cn } from '@/lib/utils'
 import { useToast } from '@/context/ToastContext'
 
 export const PayrollPage = () => {
   const { employees } = useEmployees()
-  const { getAttendanceByMonth, loading } = useAttendance()
+  const { getAttendanceByRange, loading } = useAttendance()
   const { showToast } = useToast()
 
   const [selectedEmployee, setSelectedEmployee] = useState<number>(0)
-  const [selectedMonth, setSelectedMonth] = useState<string>(
-    new Date().toISOString().slice(0, 7) // YYYY-MM
-  )
+
+  // Default to current month range
+  const now = new Date()
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+
+  const [startDate, setStartDate] = useState(firstDay)
+  const [endDate, setEndDate] = useState(lastDay)
   const [payrollData, setPayrollData] = useState<any>(null)
+
+  // Custom adjustments state
+  const [adjustments, setAdjustments] = useState<Array<{ id: string, description: string, amount: number }>>([])
+  const [newAdjDesc, setNewAdjDesc] = useState('')
+  const [newAdjAmount, setNewAdjAmount] = useState('')
+
+  const handleAddAdjustment = () => {
+    if (!newAdjDesc || !newAdjAmount) {
+      showToast('กรุณากรอกรายละเอียดและจำนวนเงิน', 'warning')
+      return
+    }
+    const amount = parseFloat(newAdjAmount)
+    if (isNaN(amount)) {
+      showToast('จำนวนเงินไม่ถูกต้อง', 'error')
+      return
+    }
+
+    setAdjustments([...adjustments, {
+      id: Math.random().toString(36).substr(2, 9),
+      description: newAdjDesc,
+      amount
+    }])
+    setNewAdjDesc('')
+    setNewAdjAmount('')
+  }
+
+  const handleRemoveAdjustment = (id: string) => {
+    setAdjustments(adjustments.filter(a => a.id !== id))
+  }
+
+  const calculateTotalAdjustments = () => {
+    return adjustments.reduce((sum: number, adj) => sum + adj.amount, 0)
+  }
+
+
 
   const handleCalculate = async () => {
     if (!selectedEmployee || selectedEmployee === 0) {
@@ -25,16 +66,25 @@ export const PayrollPage = () => {
       return
     }
 
-    const data = await getAttendanceByMonth(selectedEmployee, selectedMonth)
+    if (!startDate || !endDate) {
+      showToast('กรุณาเลือกช่วงวันที่', 'warning')
+      return
+    }
+
+    const data = await getAttendanceByRange(selectedEmployee, startDate, endDate)
     if (data) {
       setPayrollData(data)
       showToast('คำนวณเงินเดือนสำเร็จ', 'success')
     } else {
-      showToast('ไม่พบข้อมูลการเข้างานในเดือนที่เลือก', 'error')
+      showToast('ไม่พบข้อมูลการเข้างานในช่วงวันที่เลือก', 'error')
     }
   }
 
   const employee = employees.find(e => e.id === selectedEmployee)
+
+  const totalWage = parseFloat(payrollData?.summary?.total_wage || '0')
+  const monthlyAllowance = employee?.employment_type === 'monthly' ? parseFloat(String(employee?.monthly_allowance || '0')) : 0
+  const finalNetPay = totalWage + monthlyAllowance + calculateTotalAdjustments()
 
   return (
     <div className="space-y-6">
@@ -47,31 +97,42 @@ export const PayrollPage = () => {
       {/* Selection Form */}
       <Card>
         <CardHeader>
-          <CardTitle>เลือกพนักงานและเดือน</CardTitle>
+          <CardTitle>เลือกพนักงานและช่วงวันที่</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Select
-              label="เลือกพนักงาน"
-              value={selectedEmployee}
-              onChange={(e) => setSelectedEmployee(Number(e.target.value))}
-              options={employees.map(emp => ({
-                value: emp.id,
-                label: `${emp.first_name} ${emp.last_name} (${emp.employment_type === 'daily' ? 'รายวัน' : 'รายเดือน'})`
-              }))}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="md:col-span-1">
+              <Select
+                label="เลือกพนักงาน"
+                value={selectedEmployee}
+                onChange={(e) => setSelectedEmployee(Number(e.target.value))}
+                options={employees.map(emp => ({
+                  value: emp.id,
+                  label: `${emp.first_name} ${emp.last_name} (${emp.employment_type === 'daily' ? 'รายวัน' : 'รายเดือน'})`
+                }))}
+              />
+            </div>
+
+            <Input
+              label="จากวันที่"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
             />
-            <Select
-              label="เลือกเดือน"
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              options={getMonthOptions(1)}
+
+            <Input
+              label="ถึงวันที่"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
             />
+
             <div className="flex items-end">
               <Button
                 variant="primary"
                 onClick={handleCalculate}
                 disabled={loading}
-                className="w-full"
+                className="w-full h-10"
               >
                 <Calculator size={20} className="mr-2" />
                 {loading ? 'กำลังคำนวณ...' : 'คำนวณ'}
@@ -120,7 +181,7 @@ export const PayrollPage = () => {
           {/* Summary */}
           <Card>
             <CardHeader>
-              <CardTitle>สรุปการเข้างาน - {selectedMonth}</CardTitle>
+              <CardTitle>สรุปการเข้างาน - {formatDate(startDate)} ถึง {formatDate(endDate)}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -216,26 +277,91 @@ export const PayrollPage = () => {
                   </div>
                 </div>
 
-                {/* Total Income */}
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-semibold text-gray-800">รวมรายได้</span>
-                    <span className="text-2xl font-bold text-green-600">
-                      {formatCurrency(payrollData.summary.total_wage || 0)}
-                    </span>
+                {/* Adjustments Section */}
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-3 flex items-center justify-between">
+                    รายการปรับปรุง (เงินเพิ่ม/เงินหัก)
+                    <span className="text-xs font-normal text-gray-500">* ค่าติดลบคือการหักเงิน</span>
+                  </h4>
+                  <div className="space-y-2 mb-4">
+                    {adjustments.map((adj) => (
+                      <div key={adj.id} className="flex justify-between items-center py-2 border-b group">
+                        <span className="text-gray-600">{adj.description}</span>
+                        <div className="flex items-center gap-3">
+                          <span className={cn("font-medium", adj.amount >= 0 ? "text-green-600" : "text-red-600")}>
+                            {adj.amount >= 0 ? '+' : ''}{formatCurrency(adj.amount)}
+                          </span>
+                          <button
+                            onClick={() => handleRemoveAdjustment(adj.id)}
+                            className="text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add adjustment form */}
+                  <div className="flex gap-2 items-end bg-gray-50 p-3 rounded-lg">
+                    <div className="flex-1">
+                      <Input
+                        label="รายละเอียด"
+                        placeholder="เช่น โบนัส, เบี้ยขยัน, หักสาย"
+                        value={newAdjDesc}
+                        onChange={(e) => setNewAdjDesc(e.target.value)}
+                        className="bg-white"
+                      />
+                    </div>
+                    <div className="w-32">
+                      <Input
+                        label="จำนวนเงิน"
+                        type="number"
+                        placeholder="0.00"
+                        value={newAdjAmount}
+                        onChange={(e) => setNewAdjAmount(e.target.value)}
+                        className="bg-white"
+                      />
+                    </div>
+                    <Button
+                      variant="secondary"
+                      onClick={handleAddAdjustment}
+                      className="h-10 px-3"
+                    >
+                      <Plus size={20} />
+                    </Button>
                   </div>
                 </div>
 
-                {/* Net Pay */}
-                <div className="bg-blue-50 p-6 rounded-lg border-2 border-blue-200">
+                <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex justify-between items-center">
-                    <span className="text-xl font-bold text-gray-800">เงินสุทธิที่ได้รับ</span>
-                    <span className="text-3xl font-bold text-blue-600">
+                    <span className="text-lg font-semibold text-gray-800">รายได้หลักรวม</span>
+                    <span className="text-xl font-bold text-gray-700">
                       {formatCurrency(payrollData.summary.total_wage || 0)}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">
-                    * คำนวณตามการเข้างานจริงและรวม OT แล้ว
+                  {adjustments.length > 0 && (
+                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200">
+                      <span className="text-gray-600">รวมเงินเพิ่ม/เงินหัก</span>
+                      <span className={cn("font-bold", calculateTotalAdjustments() >= 0 ? "text-green-600" : "text-red-600")}>
+                        {calculateTotalAdjustments() >= 0 ? '+' : ''}{formatCurrency(calculateTotalAdjustments())}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-blue-600 p-6 rounded-lg shadow-lg shadow-blue-200 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <Calculator size={100} />
+                  </div>
+                  <div className="flex justify-between items-center relative z-10">
+                    <span className="text-xl font-bold text-white">เงินสุทธิที่ได้รับ</span>
+                    <span className="text-4xl font-bold text-white">
+                      {formatCurrency(finalNetPay)}
+                    </span>
+                  </div>
+                  <p className="text-blue-100 text-sm mt-2 relative z-10">
+                    * คำนวณจากค่าแรงฐาน + รายการเงินเข้า - รายการเงินหัก
                   </p>
                 </div>
               </div>
@@ -250,7 +376,7 @@ export const PayrollPage = () => {
           <CardContent className="text-center py-12">
             <Calculator size={48} className="mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              เลือกพนักงานและเดือนเพื่อคำนวณเงินเดือน
+              เลือกพนักงานและช่วงวันที่เพื่อคำนวณเงินเดือน
             </h3>
             <p className="text-gray-500">
               ระบบจะคำนวณเงินเดือนอัตโนมัติตามการเข้างานและการตั้งค่า

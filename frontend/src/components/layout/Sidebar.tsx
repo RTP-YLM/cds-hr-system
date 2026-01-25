@@ -7,6 +7,7 @@ const menuItems = [
   { path: '/positions', label: 'จัดการตำแหน่งงาน', icon: Users },
   { path: '/attendance', label: 'บันทึกเวลา', icon: Clock },
   { path: '/payroll', label: 'คำนวณเงินเดือน', icon: DollarSign },
+  { path: '/reports', label: 'รายงาน', icon: Clock },
   { path: '/calendar', label: 'ปฏิทินระบบ', icon: Calendar },
   { path: '/settings', label: 'ตั้งค่า', icon: Settings },
 ]

@@ -58,6 +58,37 @@ export const getAttendanceByMonth = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc   Get attendance by employee and range
+// @route  GET /api/attendance/employee/:employee_id/range
+export const getAttendanceByRange = asyncHandler(async (req, res) => {
+  const { employee_id } = req.params;
+  const { start_date, end_date } = req.validatedQuery || req.query;
+
+  const employee = await Employee.getById(employee_id);
+  if (!employee) {
+    return res.status(404).json({
+      success: false,
+      message: 'ไม่พบข้อมูลพนักงาน'
+    });
+  }
+
+  const [records, summary] = await Promise.all([
+    Attendance.getByEmployeeRange(employee_id, start_date, end_date),
+    Attendance.getSummaryByRange(employee_id, start_date, end_date)
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      employee,
+      start_date,
+      end_date,
+      records,
+      summary
+    }
+  });
+});
+
 // @desc   Get single attendance record
 // @route  GET /api/attendance/:id
 export const getAttendance = asyncHandler(async (req, res) => {
@@ -303,6 +334,7 @@ export const batchUpsertAttendance = asyncHandler(async (req, res) => {
 export default {
   getAttendanceRecords,
   getAttendanceByMonth,
+  getAttendanceByRange,
   getAttendance,
   createAttendance,
   updateAttendance,
