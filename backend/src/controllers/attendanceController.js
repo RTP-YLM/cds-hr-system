@@ -13,12 +13,19 @@ import { calculateAttendanceWage, calculateLateMinutes, calculateWorkDaysInMonth
 // @desc   Get all attendance records
 // @route  GET /api/attendance
 export const getAttendanceRecords = asyncHandler(async (req, res) => {
-  const filters = {
-    employee_id: req.query.employee_id,
-    date: req.query.date,
-    start_date: req.query.start_date,
-    end_date: req.query.end_date
-  };
+  const filters = {};
+  
+  // Validate employee_id - must be a valid integer
+  if (req.query.employee_id && req.query.employee_id !== 'undefined' && req.query.employee_id !== '') {
+    const empId = parseInt(req.query.employee_id, 10);
+    if (!isNaN(empId)) {
+      filters.employee_id = empId;
+    }
+  }
+  
+  if (req.query.date) filters.date = req.query.date;
+  if (req.query.start_date) filters.start_date = req.query.start_date;
+  if (req.query.end_date) filters.end_date = req.query.end_date;
 
   const records = await Attendance.getAll(filters);
 
