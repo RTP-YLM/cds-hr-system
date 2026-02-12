@@ -41,7 +41,7 @@ export const ReportsPage = () => {
         
         // CSV Rows
         const rows = filteredAttendances.map(att => [
-            att.date,
+            att.date ? new Date(att.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-',
             `${att.first_name} ${att.last_name}`,
             att.position_name || '-',
             att.check_in_time?.substring(0, 5) || '-',
