@@ -29,6 +29,49 @@ export const ReportsPage = () => {
         })
     }
 
+    // ส่งออกข้อมูลเป็น CSV (เปิดได้ใน Excel)
+    const handleExportExcel = () => {
+        if (filteredAttendances.length === 0) {
+            alert('ไม่มีข้อมูลให้ส่งออก')
+            return
+        }
+
+        // CSV Header
+        const headers = ['วันที่', 'ชื่อพนักงาน', 'ตำแหน่ง', 'เวลาเข้า', 'เวลาออก', 'ลา (ชม.)', 'OT (ชม.)', 'สาย (น.)', 'ประเภท', 'รายได้วัน']
+        
+        // CSV Rows
+        const rows = filteredAttendances.map(att => [
+            att.date,
+            `${att.first_name} ${att.last_name}`,
+            att.position_name || '-',
+            att.check_in_time?.substring(0, 5) || '-',
+            att.check_out_time?.substring(0, 5) || '-',
+            att.leave_hours || 0,
+            att.ot_hours || 0,
+            att.late_minutes || 0,
+            att.employment_type === 'daily' ? 'รายวัน' : 'รายเดือน',
+            att.calculated_wage_daily || 0
+        ])
+
+        // รวมเป็น CSV content
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n')
+
+        // สร้างไฟล์และดาวน์โหลด
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+        const link = document.createElement('a')
+        const url = URL.createObjectURL(blob)
+        
+        link.setAttribute('href', url)
+        link.setAttribute('download', `รายงานการเข้างาน_${startDate}_${endDate}.csv`)
+        link.style.visibility = 'hidden'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+
     useEffect(() => {
         handleFetchReport()
     }, [])
@@ -50,7 +93,7 @@ export const ReportsPage = () => {
                         <Calendar size={16} /> รายงานระดับวัน เลือกช่วงวันที่ต้องการได้
                     </p>
                 </div>
-                <Button variant="secondary" className="gap-2">
+                <Button variant="secondary" className="gap-2" onClick={handleExportExcel}>
                     <Download size={18} />
                     ส่งออก Excel
                 </Button>
