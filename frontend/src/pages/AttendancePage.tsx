@@ -24,7 +24,7 @@ interface BatchItem {
 }
 
 export const AttendancePage = () => {
-  const { attendances, loading, error, createBatchAttendance, fetchAttendances } = useAttendance()
+  const { attendances, loading, error, createBatchAttendance, fetchAttendances, deleteAttendance } = useAttendance()
   const { employees } = useEmployees()
   const { showToast } = useToast()
 
@@ -126,6 +126,21 @@ export const AttendancePage = () => {
       fetchAttendances({ date: selectedDate })
     } else {
       showToast(result.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error')
+    }
+  }
+
+  // ลบรายการ attendance
+  const handleDeleteAttendance = async (id: number) => {
+    if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?')) {
+      return
+    }
+
+    const result = await deleteAttendance(id)
+    if (result.success) {
+      showToast('ลบรายการสำเร็จ', 'success')
+      fetchAttendances({ date: selectedDate })
+    } else {
+      showToast(result.message || 'เกิดข้อผิดพลาดในการลบ', 'error')
     }
   }
 
@@ -338,12 +353,13 @@ export const AttendancePage = () => {
                   <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">สาย (นาที)</th>
                   <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">สถานะ</th>
                   <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">รายได้วัน</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">จัดการ</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
                 {attendances.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center">
+                    <td colSpan={9} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center gap-2 text-gray-300">
                         <Users size={48} />
                         <p className="text-sm font-medium">ยังไม่มีข้อมูลการบันทึกเวลาในวันนี้</p>
@@ -404,6 +420,15 @@ export const AttendancePage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-extrabold text-blue-600">
                         {formatCurrency(att.calculated_wage_daily)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button
+                          onClick={() => handleDeleteAttendance(att.id)}
+                          className="text-gray-300 hover:text-red-500 transition-colors p-1"
+                          title="ลบรายการ"
+                        >
+                          <Trash2 size={18} />
+                        </button>
                       </td>
                     </tr>
                   ))
